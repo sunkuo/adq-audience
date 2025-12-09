@@ -22,6 +22,7 @@ import {
 import { useSession, signOut } from "../lib/auth-client";
 import { UserManagement } from "./UserManagement";
 import type { MenuItemType } from "antd/es/menu/interface";
+import logo from "../assets/logo.svg";
 
 const { Title, Text } = Typography;
 const { Header, Sider, Content } = Layout;
@@ -109,16 +110,7 @@ export function HomePage() {
           padding: collapsed ? 0 : "0 24px",
           borderBottom: "1px solid rgba(0,0,0,0.05)"
         }}>
-          <div style={{ 
-            width: 32, height: 32, 
-            background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)", 
-            borderRadius: 8,
-            display: "grid", placeItems: "center",
-            color: "white", fontWeight: "bold",
-            flexShrink: 0
-          }}>
-            B
-          </div>
+          <img src={logo} alt="Admin Plus" style={{ width: 32, height: 32 }} />
           {!collapsed && (
             <span style={{ marginLeft: 12, fontSize: 18, fontWeight: 600, color: "#1e293b", whiteSpace: "nowrap" }}>
               Admin Plus
@@ -220,7 +212,7 @@ export function HomePage() {
                           开始探索
                         </Button>
                         <Button ghost size="large" icon={<SafetyCertificateOutlined />}>
-                          查看文档
+                          问问AI
                         </Button>
                       </div>
                     </Col>
@@ -261,7 +253,7 @@ export function HomePage() {
                       value="Username" 
                       valueStyle={{ fontSize: 18, fontWeight: 600 }}
                     />
-                    <Tag color="blue" style={{ marginTop: 8 }}>Admin Plus</Tag>
+                    <Tag color="blue" style={{ marginTop: 8 }}>Better Auth</Tag>
                   </Card>
                 </Col>
               </Row>
