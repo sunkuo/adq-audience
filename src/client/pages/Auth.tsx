@@ -169,13 +169,13 @@ export function AuthPage() {
               boxShadow: "0 10px 15px -3px rgba(99, 102, 241, 0.3)"
             }}
           >
-            B
+            A
           </div>
           <Title level={3} style={{ margin: "0 0 8px", fontWeight: 700, color: "#1e293b" }}>
-            Better Auth
+            Admin Plus
           </Title>
           <Text type="secondary" style={{ fontSize: 15 }}>
-            新一代全栈身份验证解决方案
+            新一代全栈后台管理系统
           </Text>
         </div>
 
