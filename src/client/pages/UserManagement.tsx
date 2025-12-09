@@ -246,11 +246,11 @@ export function UserManagement() {
   const columns: ColumnsType<User> = [
     {
       title: "用户名",
-      dataIndex: "name",
-      key: "name",
-      render: (name, record) => (
+      dataIndex: "username",
+      key: "username",
+      render: (username, record) => (
         <Space>
-          <span style={{ fontWeight: 500 }}>{name || "-"}</span>
+          <span style={{ fontWeight: 500 }}>{username || "-"}</span>
           {record.banned && (
             <Tooltip title={record.banReason || "已禁用"}>
               <Badge status="error" />
@@ -258,6 +258,12 @@ export function UserManagement() {
           )}
         </Space>
       ),
+    },
+    {
+      title: "昵称",
+      dataIndex: "name",
+      key: "name",
+      render: (name) => <Text copyable={{ text: name }}>{name}</Text>,
     },
     {
       title: "邮箱",

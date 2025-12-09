@@ -239,11 +239,11 @@ export function HomePage() {
                   <Card bordered={false} className="shadow-sm hover:shadow-md transition-all">
                     <Statistic 
                       title="活跃用户" 
-                      value={128} 
+                      value={0} 
                       valueStyle={{ fontWeight: 600 }}
                       prefix={<TeamOutlined />}
                     />
-                    <Text type="success" style={{ fontSize: 12 }}>+12% 较上周</Text>
+                    <Text type="success" style={{ fontSize: 12 }}>+0% 较上周</Text>
                   </Card>
                 </Col>
                 <Col xs={24} sm={8}>
