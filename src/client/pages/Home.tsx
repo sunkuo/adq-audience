@@ -20,6 +20,7 @@ import {
   FileTextOutlined
 } from "@ant-design/icons";
 import { useSession, signOut } from "../lib/auth-client";
+import type { MenuItemType } from "antd/es/menu/interface";
 
 const { Title, Text } = Typography;
 const { Header, Sider, Content } = Layout;
@@ -38,7 +39,7 @@ export function HomePage() {
   };
 
   // 侧边栏菜单
-  const menuItems = [
+  const menuItems: MenuItemType[] = [
     {
       key: "dashboard",
       icon: <DashboardOutlined />,
@@ -53,9 +54,6 @@ export function HomePage() {
       key: "content",
       icon: <FileTextOutlined />,
       label: "内容管理",
-    },
-    {
-      type: "divider",
     },
     {
       key: "settings",
