@@ -189,7 +189,7 @@ export function HomePage() {
             <div className="fade-in">
               {/* 欢迎 Banner */}
               <Card 
-                bordered={false}
+                variant="borderless"
                 style={{ 
                   background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
                   borderRadius: 24,
@@ -226,33 +226,33 @@ export function HomePage() {
               {/* 统计卡片 */}
               <Row gutter={[24, 24]}>
                 <Col xs={24} sm={8}>
-                  <Card bordered={false} className="shadow-sm hover:shadow-md transition-all">
+                  <Card variant="borderless" className="shadow-sm hover:shadow-md transition-all">
                     <Statistic 
                       title="系统状态" 
                       value="运行中" 
-                      valueStyle={{ color: "#10b981", fontWeight: 600 }}
+                      styles={{ content: { color: "#10b981", fontWeight: 600 } }}
                       prefix={<ThunderboltOutlined />}
                     />
                     <Tag color="success" style={{ marginTop: 8 }}>v1.0.0</Tag>
                   </Card>
                 </Col>
                 <Col xs={24} sm={8}>
-                  <Card bordered={false} className="shadow-sm hover:shadow-md transition-all">
+                  <Card variant="borderless" className="shadow-sm hover:shadow-md transition-all">
                     <Statistic 
                       title="活跃用户" 
                       value={0} 
-                      valueStyle={{ fontWeight: 600 }}
+                      styles={{ content: { fontWeight: 600 } }}
                       prefix={<TeamOutlined />}
                     />
                     <Text type="success" style={{ fontSize: 12 }}>+0% 较上周</Text>
                   </Card>
                 </Col>
                 <Col xs={24} sm={8}>
-                  <Card bordered={false} className="shadow-sm hover:shadow-md transition-all">
+                  <Card variant="borderless" className="shadow-sm hover:shadow-md transition-all">
                     <Statistic 
                       title="认证方式" 
                       value="Username" 
-                      valueStyle={{ fontSize: 18, fontWeight: 600 }}
+                      styles={{ content: { fontSize: 18, fontWeight: 600 } }}
                     />
                     <Tag color="blue" style={{ marginTop: 8 }}>Better Auth</Tag>
                   </Card>
@@ -265,7 +265,7 @@ export function HomePage() {
                 <Col xs={24} sm={12} lg={8}>
                   <Card 
                     hoverable 
-                    bordered={false} 
+                    variant="borderless" 
                     style={{ height: "100%", cursor: isAdmin ? "pointer" : "default" }}
                     onClick={() => isAdmin && setCurrentPage("users")}
                   >
@@ -281,7 +281,7 @@ export function HomePage() {
                   </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={8}>
-                  <Card hoverable bordered={false} style={{ height: "100%" }}>
+                  <Card hoverable variant="borderless" style={{ height: "100%" }}>
                     <Card.Meta
                       avatar={<Avatar style={{ backgroundColor: "#dbeafe", color: "#2563eb" }} icon={<SafetyCertificateOutlined />} />}
                       title="安全审计"
@@ -290,7 +290,7 @@ export function HomePage() {
                   </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={8}>
-                  <Card hoverable bordered={false} style={{ height: "100%" }}>
+                  <Card hoverable variant="borderless" style={{ height: "100%" }}>
                     <Card.Meta
                       avatar={<Avatar style={{ backgroundColor: "#ffe4e6", color: "#e11d48" }} icon={<SettingOutlined />} />}
                       title="系统配置"
@@ -305,7 +305,7 @@ export function HomePage() {
           {/* 其他页面占位 */}
           {currentPage === "content" && (
             <div className="fade-in">
-              <Card bordered={false}>
+              <Card variant="borderless">
                 <Title level={4}>内容管理</Title>
                 <Text type="secondary">功能开发中...</Text>
               </Card>
@@ -313,7 +313,7 @@ export function HomePage() {
           )}
           {currentPage === "settings" && (
             <div className="fade-in">
-              <Card bordered={false}>
+              <Card variant="borderless">
                 <Title level={4}>系统设置</Title>
                 <Text type="secondary">功能开发中...</Text>
               </Card>

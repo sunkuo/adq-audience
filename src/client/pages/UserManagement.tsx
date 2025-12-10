@@ -252,7 +252,7 @@ export function UserManagement() {
       fixed: "left",
       render: (username, record) => (
         <Space>
-          <span style={{ fontWeight: 500 }}>{username || "-"}</span>
+          <span style={{fontWeight: 500}}>{username || "-"}</span>
           {record.banned && (
             <Tooltip title={record.banReason || "已禁用"}>
               <Badge status="error" />
@@ -389,32 +389,32 @@ export function UserManagement() {
       {/* 统计卡片 */}
       <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={8}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="borderless" className="shadow-sm">
             <Statistic
               title="总用户数"
               value={total}
               prefix={<UserOutlined />}
-              valueStyle={{ color: "#6366f1" }}
+              styles={{ content: { color: "#6366f1" } }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="borderless" className="shadow-sm">
             <Statistic
               title="管理员"
               value={adminCount}
               prefix={<SafetyOutlined />}
-              valueStyle={{ color: "#f59e0b" }}
+              styles={{ content: { color: "#f59e0b" } }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="borderless" className="shadow-sm">
             <Statistic
               title="已禁用"
               value={bannedCount}
               prefix={<LockOutlined />}
-              valueStyle={{ color: "#ef4444" }}
+              styles={{ content: { color: "#ef4444" } }}
             />
           </Card>
         </Col>
@@ -422,7 +422,7 @@ export function UserManagement() {
 
       {/* 用户列表 */}
       <Card
-        bordered={false}
+        variant="borderless"
         className="shadow-sm"
         title={
           <Title level={5} style={{ margin: 0 }}>
