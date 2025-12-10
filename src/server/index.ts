@@ -6,6 +6,8 @@ import { serve } from "bun";
 import index from "../client/index.html";
 import { handleTRPCRequest } from "./handler";
 import { auth } from "./auth";
+// 加载 BullMQ（导入时自动注册所有队列）
+import { startBullBoard } from "./bullmq/index";
 
 const server = serve({
   routes: {
@@ -24,5 +26,8 @@ const server = serve({
     console: true,
   },
 });
+
+// 启动 Bull Board
+startBullBoard();
 
 console.log(`🚀 Server running at ${server.url}`);

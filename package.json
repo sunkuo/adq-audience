@@ -9,10 +9,16 @@
     "start": "NODE_ENV=production bun src/server/index.ts"
   },
   "dependencies": {
+    "@bull-board/api": "^6.15.0",
+    "@bull-board/hono": "^6.15.0",
     "@trpc/client": "^11.7.2",
     "@trpc/server": "^11.7.2",
     "antd": "^6.0.1",
     "better-auth": "^1.4.5",
+    "bullmq": "^5.65.1",
+    "express": "^5.2.1",
+    "hono": "^4.10.8",
+    "ioredis": "^5.8.2",
     "mongodb": "^7.0.0",
     "react": "^19",
     "react-dom": "^19",
@@ -21,6 +27,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/express": "^5.0.6",
     "@types/react": "^19",
     "@types/react-dom": "^19"
   }
