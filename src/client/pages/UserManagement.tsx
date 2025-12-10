@@ -248,6 +248,8 @@ export function UserManagement() {
       title: "用户名",
       dataIndex: "username",
       key: "username",
+      width: 140,
+      fixed: "left",
       render: (username, record) => (
         <Space>
           <span style={{ fontWeight: 500 }}>{username || "-"}</span>
@@ -263,12 +265,15 @@ export function UserManagement() {
       title: "昵称",
       dataIndex: "name",
       key: "name",
+      width: 120,
       render: (name) => <Text copyable={{ text: name }}>{name}</Text>,
     },
     {
       title: "邮箱",
       dataIndex: "email",
       key: "email",
+      width: 200,
+      ellipsis: true,
       render: (email) => <Text copyable={{ text: email }}>{email}</Text>,
     },
     {
@@ -286,7 +291,7 @@ export function UserManagement() {
       title: "状态",
       dataIndex: "banned",
       key: "banned",
-      width: 100,
+      width: 80,
       render: (banned) => (
         <Tag color={banned ? "error" : "success"}>
           {banned ? "已禁用" : "正常"}
@@ -297,13 +302,14 @@ export function UserManagement() {
       title: "创建时间",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 180,
+      width: 170,
       render: (date) => new Date(date).toLocaleString("zh-CN"),
     },
     {
       title: "操作",
       key: "actions",
-      width: 280,
+      width: 200,
+      fixed: "right",
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="修改密码">
@@ -443,6 +449,7 @@ export function UserManagement() {
           dataSource={users}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 1010 }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

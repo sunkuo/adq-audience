@@ -21,6 +21,7 @@ import {
 } from "@ant-design/icons";
 import { useSession, signOut } from "../lib/auth-client";
 import { UserManagement } from "./UserManagement";
+import { SecurityCenter } from "./SecurityCenter";
 import type { MenuItemType } from "antd/es/menu/interface";
 import logo from "../assets/logo.svg";
 
@@ -318,14 +319,7 @@ export function HomePage() {
               </Card>
             </div>
           )}
-          {currentPage === "security" && (
-            <div className="fade-in">
-              <Card bordered={false}>
-                <Title level={4}>安全中心</Title>
-                <Text type="secondary">功能开发中...</Text>
-              </Card>
-            </div>
-          )}
+          {currentPage === "security" && <SecurityCenter />}
         </Content>
       </Layout>
     </Layout>
