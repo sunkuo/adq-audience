@@ -5,10 +5,12 @@
  */
 
 import { betterAuth } from "better-auth";
+import { createAuthMiddleware } from "better-auth/api";
 import { username, admin } from "better-auth/plugins";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 import { config } from "./config";
+import Profile from "./entity/profile";
 
 // MongoDB 连接
 const client = new MongoClient(config.mongoUri);
@@ -44,4 +46,27 @@ export const auth = betterAuth({
       adminRoles: ["admin"], // 管理员角色
     }),
   ],
+
+  // 钩子：用户注册后创建 Profile
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      // 检测注册请求
+      if (ctx.path.startsWith("/sign-up")) {
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          try {
+            // 创建用户的 Profile
+            await Profile.create({
+              userid: newSession.user.id,
+              nickname: newSession.user.name || "",
+              avatar: "",
+            });
+            console.log(`✅ Profile created for user: ${newSession.user.id}`);
+          } catch (err) {
+            console.error("❌ Failed to create profile:", err);
+          }
+        }
+      }
+    }),
+  },
 });

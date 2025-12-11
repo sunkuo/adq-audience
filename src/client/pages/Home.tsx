@@ -3,7 +3,7 @@
  * 包含侧边栏、顶部导航和内容区域
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Card, Typography, Avatar, Row, Col, Statistic, Tag, App, Layout, Menu, Dropdown, Breadcrumb, theme } from "antd";
 import { 
   UserOutlined, 
@@ -20,10 +20,17 @@ import {
   FileTextOutlined
 } from "@ant-design/icons";
 import { useSession, signOut } from "../lib/auth-client";
+import { trpc } from "../trpc";
 import { UserManagement } from "./UserManagement";
 import { SecurityCenter } from "./SecurityCenter";
+import { ProfileSettings } from "./ProfileSettings";
 import type { MenuItemType } from "antd/es/menu/interface";
 import logo from "../assets/logo.svg";
+
+interface Profile {
+  nickname: string;
+  avatar: string;
+}
 
 const { Title, Text } = Typography;
 const { Header, Sider, Content } = Layout;
@@ -33,12 +40,38 @@ export function HomePage() {
   const { message } = App.useApp();
   const [collapsed, setCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
+  const [profile, setProfile] = useState<Profile | null>(null);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
   // 检查用户是否是管理员
   const isAdmin = session?.user?.role === "admin";
+
+  // 加载用户 Profile
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const data = await trpc.profile.get.query();
+        setProfile(data);
+      } catch (err) {
+        console.error("Failed to load profile:", err);
+      }
+    };
+    if (session) {
+      loadProfile();
+    }
+  }, [session]);
+
+  // 当从个人资料页面切换走时刷新 Profile
+  const [prevPage, setPrevPage] = useState("dashboard");
+  useEffect(() => {
+    if (prevPage === "profile" && currentPage !== "profile") {
+      // 从个人资料页面切换走，刷新 profile
+      trpc.profile.get.query().then(setProfile).catch(console.error);
+    }
+    setPrevPage(currentPage);
+  }, [currentPage, prevPage]);
 
   const handleLogout = async () => {
     await signOut();
@@ -78,8 +111,8 @@ export function HomePage() {
   // 用户下拉菜单
   const userMenu = {
     items: [
-      { key: "profile", label: "个人资料", icon: <UserOutlined /> },
-      { key: "settings", label: "偏好设置", icon: <SettingOutlined /> },
+      { key: "profile", label: "个人资料", icon: <UserOutlined />, onClick: () => setCurrentPage("profile") },
+      { key: "settings", label: "偏好设置", icon: <SettingOutlined />, onClick: () => setCurrentPage("settings") },
       { type: "divider" as const },
       { key: "logout", label: "退出登录", icon: <LogoutOutlined />, danger: true, onClick: handleLogout },
     ],
@@ -155,6 +188,7 @@ export function HomePage() {
                 { title: currentPage === 'dashboard' ? '仪表盘' : 
                          currentPage === 'users' ? '用户管理' :
                          currentPage === 'content' ? '内容管理' :
+                         currentPage === 'profile' ? '个人资料' :
                          currentPage === 'settings' ? '系统设置' :
                          currentPage === 'security' ? '安全中心' : '仪表盘' },
               ]}
@@ -167,12 +201,12 @@ export function HomePage() {
             <Dropdown menu={userMenu} placement="bottomRight" arrow>
               <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "4px 8px", borderRadius: 6 }} className="hover:bg-gray-100">
                 <Avatar 
-                  style={{ backgroundColor: "#6366f1" }} 
+                  style={{ backgroundColor: profile?.avatar ? "transparent" : "#6366f1" }} 
                   icon={<UserOutlined />} 
-                  src={session?.user?.image}
+                  src={profile?.avatar || undefined}
                 />
                 <span style={{ fontWeight: 500, color: "#334155" }}>
-                  {session?.user?.name || session?.user?.email?.split("@")[0]}
+                  {profile?.nickname || session?.user?.name || session?.user?.email?.split("@")[0]}
                 </span>
               </div>
             </Dropdown>
@@ -203,7 +237,7 @@ export function HomePage() {
                   <Row align="middle" gutter={24}>
                     <Col flex="1">
                       <Title level={2} style={{ color: "white", marginBottom: 8 }}>
-                        早安, {session?.user?.name || "开发者"}! ☀️
+                        早安, {profile?.nickname || session?.user?.name || "开发者"}! ☀️
                       </Title>
                       <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 16 }}>
                         准备好开始今天的开发工作了吗？Admin Plus 已为您准备就绪。
@@ -320,6 +354,7 @@ export function HomePage() {
             </div>
           )}
           {currentPage === "security" && <SecurityCenter />}
+          {currentPage === "profile" && <ProfileSettings />}
         </Content>
       </Layout>
     </Layout>

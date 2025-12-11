@@ -20,6 +20,7 @@
     "hono": "^4.10.8",
     "ioredis": "^5.8.2",
     "mongodb": "^7.0.0",
+    "mongoose": "^9.0.1",
     "react": "^19",
     "react-dom": "^19",
     "react-router": "^7.10.1",

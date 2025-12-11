@@ -4,6 +4,7 @@
 
 import { router } from "../trpc";
 import { userRouter } from "./user";
+import { profileRouter } from "./profile";
 
 /**
  * App Router - 所有 API 路由的根
@@ -11,6 +12,7 @@ import { userRouter } from "./user";
  */
 export const appRouter = router({
   user: userRouter,
+  profile: profileRouter,
 });
 
 /**
