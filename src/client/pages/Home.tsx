@@ -10,7 +10,6 @@ import {
   LogoutOutlined, 
   DashboardOutlined, 
   SettingOutlined, 
-  BellOutlined,
   SafetyCertificateOutlined,
   RocketOutlined,
   ThunderboltOutlined,
@@ -24,6 +23,8 @@ import { trpc } from "../trpc";
 import { UserManagement } from "./UserManagement";
 import { SecurityCenter } from "./SecurityCenter";
 import { ProfileSettings } from "./ProfileSettings";
+import { SystemSettings } from "./SystemSettings";
+import { NotificationModal } from "../components/NotificationModal";
 import type { MenuItemType } from "antd/es/menu/interface";
 import logo from "../assets/logo.svg";
 
@@ -197,7 +198,7 @@ export function HomePage() {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", paddingRight: 24, gap: 16 }}>
-            <Button type="text" shape="circle" icon={<BellOutlined />} />
+            <NotificationModal />
             <Dropdown menu={userMenu} placement="bottomRight" arrow>
               <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "4px 8px", borderRadius: 6 }} className="hover:bg-gray-100">
                 <Avatar 
@@ -345,14 +346,7 @@ export function HomePage() {
               </Card>
             </div>
           )}
-          {currentPage === "settings" && (
-            <div className="fade-in">
-              <Card variant="borderless">
-                <Title level={4}>系统设置</Title>
-                <Text type="secondary">功能开发中...</Text>
-              </Card>
-            </div>
-          )}
+          {currentPage === "settings" && <SystemSettings />}
           {currentPage === "security" && <SecurityCenter />}
           {currentPage === "profile" && <ProfileSettings />}
         </Content>
