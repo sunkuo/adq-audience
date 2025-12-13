@@ -10,13 +10,21 @@ import { registeredQueues } from "./registry";
  * 自动收集所有通过 @Queue 和 @Schedule 注册的队列
  * @param port 端口号，默认 3001
  */
+const tag = '[bull-board]'
+
 export function startBullBoard(port = 3001) {
   const serverAdapter = new HonoAdapter(serveStatic);
   serverAdapter.setBasePath("/queues");
 
+  const uiBasePath = Bun.env.BULL_BOARD_PATH || "node_modules/@bull-board/ui"
+  console.log(tag, 'uiBasePath:', uiBasePath)
+
   createBullBoard({
     queues: registeredQueues.map((queue) => new BullMQAdapter(queue)),
     serverAdapter,
+    options: {
+      uiBasePath,
+    }
   });
 
   const app = new Hono();

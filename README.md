@@ -15,7 +15,14 @@ bun dev
 To run for production:
 
 ```bash
-bun start
+bun run compile && bun run publish
 ```
 
-This project was created using `bun init` in bun v1.3.1. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+```bash
+NODE_ENV=production ./server-linux-x64
+```
+
+with pm2:
+```bash
+pm2 start
+```

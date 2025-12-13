@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --hot src/server/index.ts",
+    "dev": "NODE_ENV=development bun --hot src/server/index.ts",
     "build": "bun build ./src/client/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
-    "start": "NODE_ENV=production bun src/server/index.ts"
+    "start": "NODE_ENV=production bun src/server/index.ts",
+    "compile": "bun build --target=bun-linux-x64 --production --compile ./src/server/index.ts --outfile server-linux-x64",
+    "publish": "bun run compile && ./publish.sh"
   },
   "dependencies": {
     "@bull-board/api": "^6.15.0",

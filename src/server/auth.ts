@@ -22,7 +22,7 @@ client
     console.log("✅ MongoDB 连接成功");
   })
   .catch((err) => {
-    console.error("❌ MongoDB 连接失败:", err);
+    console.error("❌ MongoDB 连接失败:", err.message);
   });
 
 const db = client.db();
