@@ -7,6 +7,7 @@ import { router, protectedProcedure } from "../trpc";
 import Setting from "../entity/setting";
 import { Settings } from "../enum/Settings";
 import { sendFeishuNotification } from "../service/feishuNotify";
+import { refreshUserToken, getOrRefreshToken } from "../service/wxwork";
 
 // 通知设置返回类型
 interface NotificationSettings {
@@ -128,16 +129,13 @@ export const settingRouter = router({
       return result;
     }),
 
-  // 批量更新通知设置
-  updateAllNotificationSettings: protectedProcedure
+  // 更新通知设置（仅通知相关）
+  updateNotificationSettings: protectedProcedure
     .input(
       z.object({
         systemNotificationEnabled: z.boolean().optional(),
         feishuNotificationEnabled: z.boolean().optional(),
         feishuWebhookUrl: z.string().url("请输入有效的URL").or(z.literal("")).optional(),
-        wechatWorkCorpid: z.string().optional(),
-        wechatWorkCorpsecret: z.string().optional(),
-        wechatWorkRemark: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -187,6 +185,25 @@ export const settingRouter = router({
         );
       }
 
+      await Promise.all(updates);
+
+      return { success: true };
+    }),
+
+  // 更新企业微信应用设置
+  updateWxWorkSettings: protectedProcedure
+    .input(
+      z.object({
+        wechatWorkCorpid: z.string().optional(),
+        wechatWorkCorpsecret: z.string().optional(),
+        wechatWorkRemark: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const updates: Promise<any>[] = [];
+
       if (input.wechatWorkCorpid !== undefined) {
         updates.push(
           Setting.findOneAndUpdate(
@@ -233,4 +250,57 @@ export const settingRouter = router({
 
       return { success: true };
     }),
+
+  // 测试企业微信配置并获取access_token
+  testWxWorkConfig: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      const token = await getOrRefreshToken(userId);
+
+      if (!token) {
+        return {
+          success: false,
+          message: "获取access_token失败，请检查CorpID和CorpSecret配置是否正确",
+        };
+      }
+
+      return {
+        success: true,
+        message: "企业微信配置验证成功，access_token已获取",
+        token: token.substring(0, 20) + "...", // 只返回部分token用于验证
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `测试失败: ${error}`,
+      };
+    }
+  }),
+
+  // 手动刷新当前用户的access_token
+  refreshWxWorkToken: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      const success = await refreshUserToken(userId);
+
+      if (success) {
+        return {
+          success: true,
+          message: "access_token刷新成功",
+        };
+      } else {
+        return {
+          success: false,
+          message: "刷新失败，请检查配置或稍后重试",
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: `刷新失败: ${error}`,
+      };
+    }
+  }),
 });
