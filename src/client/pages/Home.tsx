@@ -145,10 +145,10 @@ export function HomePage() {
           padding: collapsed ? 0 : "0 24px",
           borderBottom: "1px solid rgba(0,0,0,0.05)"
         }}>
-          <img src={logo} alt="Admin Plus" style={{ width: 32, height: 32 }} />
+          <img src={logo} alt="ADQ Audience" style={{ width: 32, height: 32 }} />
           {!collapsed && (
             <span style={{ marginLeft: 12, fontSize: 18, fontWeight: 600, color: "#1e293b", whiteSpace: "nowrap" }}>
-              Admin Plus
+              ADQ Audience
             </span>
           )}
         </div>
@@ -241,7 +241,7 @@ export function HomePage() {
                         早安, {profile?.nickname || session?.user?.name || "开发者"}! ☀️
                       </Title>
                       <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 16 }}>
-                        准备好开始今天的开发工作了吗？Admin Plus 已为您准备就绪。
+                        准备好开始今天的开发工作了吗？ADQ Audience 已为您准备就绪。
                       </Text>
                       <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
                         <Button type="default" size="large" icon={<RocketOutlined />} style={{ border: "none" }}>

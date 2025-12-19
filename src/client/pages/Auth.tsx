@@ -190,15 +190,15 @@ export function AuthPage() {
         bordered={false}
       >
         <div style={{ textAlign: "center", marginBottom: 32, marginTop: 12 }}>
-          <img src={logo} alt="Admin Plus" style={{ width: 32, height: 32 }} />
+          <img src={logo} alt="ADQ Audience" style={{ width: 32, height: 32 }} />
           <Title
             level={3}
             style={{ margin: "0 0 8px", fontWeight: 700, color: "#1e293b" }}
           >
-            Admin Plus
+            ADQ Audience
           </Title>
           <Text type="secondary" style={{ fontSize: 15 }}>
-            新一代全栈后台管理系统
+            ADQ 受众管理系统
           </Text>
         </div>
 

@@ -1,4 +1,4 @@
-# bun-react-template
+# adq-audience
 
 To install dependencies:
 
