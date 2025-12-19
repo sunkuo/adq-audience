@@ -10,6 +10,7 @@ import { auth } from "./auth";
 import { startBullBoard } from "./bullmq/index";
 
 const server = serve({
+  port: 4000,
   routes: {
     // Better Auth API - 处理所有 /api/auth/* 请求
     "/api/auth/*": (req) => auth.handler(req),

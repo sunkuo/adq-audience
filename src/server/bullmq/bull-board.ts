@@ -12,7 +12,7 @@ import { registeredQueues } from "./registry";
  */
 const tag = '[bull-board]'
 
-export function startBullBoard(port = 3001) {
+export function startBullBoard(port = 4001) {
   const serverAdapter = new HonoAdapter(serveStatic);
   serverAdapter.setBasePath("/queues");
 
