@@ -4,7 +4,7 @@
 
 import { router, protectedProcedure } from "../trpc";
 import { z } from "zod";
-import { getCustomers, syncCustomerListByWxUserId } from "../service/customer";
+import { getCustomers, syncCustomerListByWxUserId, exportUnionids } from "../service/customer";
 import {
   createSyncTask,
   startSyncTask,
@@ -94,4 +94,10 @@ export const customerRouter = router({
     .query(async ({ ctx, input }) => {
       return await getTaskProgress(input.taskId);
     }),
+
+  // 导出客户的unionid到txt文件
+  exportUnionids: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    return await exportUnionids(userId);
+  }),
 });

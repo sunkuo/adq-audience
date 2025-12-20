@@ -26,6 +26,7 @@ import {
   CustomerServiceOutlined,
   CheckCircleOutlined,
   PictureOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import { trpc } from "../trpc";
 
@@ -55,6 +56,7 @@ interface Pagination {
 export function Customers() {
   const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [hasConfig, setHasConfig] = useState(true);
   const [corpId, setCorpId] = useState("");
@@ -80,6 +82,32 @@ export function Customers() {
       message.error(err?.message || "加载失败");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 导出unionid
+  const handleExportUnionids = async () => {
+    setExporting(true);
+    try {
+      const result = await trpc.customer.exportUnionids.mutate();
+
+      if (result.success && result.downloadUrl) {
+        // 使用后端返回的下载链接
+        const a = document.createElement('a');
+        a.href = result.downloadUrl;
+        a.download = result.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        message.success(`成功导出 ${result.count} 个unionid`);
+      } else {
+        message.error(result.message || "导出失败");
+      }
+    } catch (err: any) {
+      message.error(err?.message || "导出失败");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -182,6 +210,18 @@ export function Customers() {
                 <span>客户列表</span>
               </Space>
             }
+            extra={
+              hasConfig && pagination.total > 0 && (
+                <Button
+                  type="primary"
+                  icon={<DownloadOutlined />}
+                  onClick={handleExportUnionids}
+                  loading={exporting}
+                >
+                  导出UnionID
+                </Button>
+              )
+            }
           >
             {!hasConfig && (
               <Alert
@@ -261,6 +301,7 @@ export function Customers() {
                 <li>请使用任务管理功能进行批量同步，支持分页递归获取所有数据</li>
                 <li>access_token 会自动管理，无需手动刷新</li>
                 <li>表格支持后端分页，可调整每页显示数量和跳转页码</li>
+                <li>支持导出所有客户的UnionID为TXT文件（一行一个）</li>
               </ul>
             </Paragraph>
 

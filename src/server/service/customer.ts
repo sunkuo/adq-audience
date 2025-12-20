@@ -8,6 +8,8 @@ import CorpUser from "../entity/corpUser";
 import Setting from "../entity/setting";
 import { Settings } from "../enum/Settings";
 import { getOrRefreshToken } from "./wxwork";
+import fs from "fs";
+import path from "path";
 
 interface ExternalContact {
   external_userid: string;
@@ -600,6 +602,94 @@ export async function getCustomers(uid: string, page: number = 1, pageSize: numb
         total: 0,
         totalPages: 0,
       },
+    };
+  }
+}
+
+/**
+ * 导出客户的unionid到txt文件
+ * @param uid 用户ID
+ * @returns 包含下载链接和文件名的对象
+ */
+export async function exportUnionids(uid: string): Promise<{
+  success: boolean;
+  downloadUrl?: string;
+  fileName?: string;
+  count?: number;
+  message: string;
+}> {
+  console.log(`[customer] ===== exportUnionids START =====`);
+  console.log(`[customer] uid: ${uid}`);
+  try {
+    // 获取用户的企业微信配置
+    const corpIdSetting = await Setting.findOne({ userid: uid, key: Settings.WECHAT_WORK_CORPID });
+    if (!corpIdSetting || !corpIdSetting.value) {
+      return {
+        success: false,
+        message: "未配置企业微信CorpID",
+      };
+    }
+
+    const corpId = corpIdSetting.value.corpid as string;
+    if (!corpId) {
+      return {
+        success: false,
+        message: "企业微信CorpID格式错误",
+      };
+    }
+
+    // 获取企业微信应用备注
+    const remarkSetting = await Setting.findOne({ userid: uid, key: Settings.WECHAT_WORK_REMARK });
+    const appRemark = remarkSetting?.value?.remark || "企业微信";
+
+    // 查询所有客户的unionid
+    const customers = await Customer.find({ userid: uid, corpid: corpId }).select('unionid');
+
+    // 过滤有unionid的客户
+    const unionids = customers
+      .map(c => c.unionid)
+      .filter((u): u is string => !!u); // 类型守卫，过滤掉null/undefined
+
+    if (unionids.length === 0) {
+      return {
+        success: false,
+        message: "没有找到有效的unionid数据",
+      };
+    }
+
+    // 创建导出目录
+    const exportDir = path.join(process.cwd(), 'exports');
+    if (!fs.existsSync(exportDir)) {
+      fs.mkdirSync(exportDir, { recursive: true });
+    }
+
+    // 生成文件名：应用备注 + 数量 + .txt
+    const fileName = `${appRemark}_${unionids.length}.txt`;
+    const filePath = path.join(exportDir, fileName);
+
+    // 写入文件（一行一个unionid）
+    const fileContent = unionids.join('\n');
+    fs.writeFileSync(filePath, fileContent, { encoding: 'utf-8' });
+
+    // 生成下载链接
+    const downloadUrl = `/api/download/${fileName}`;
+
+    console.log(`[customer] Exported ${unionids.length} unionids to ${filePath}`);
+    console.log(`[customer] Download URL: ${downloadUrl}`);
+
+    return {
+      success: true,
+      downloadUrl,
+      fileName,
+      count: unionids.length,
+      message: `成功导出 ${unionids.length} 个unionid`,
+    };
+  } catch (error) {
+    console.error(`[customer] ===== exportUnionids END - ERROR =====`);
+    console.error(`[customer] Failed to export unionids for user ${uid}:`, error);
+    return {
+      success: false,
+      message: `导出失败: ${error}`,
     };
   }
 }
