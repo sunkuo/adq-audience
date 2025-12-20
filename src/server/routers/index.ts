@@ -7,6 +7,7 @@ import { userRouter } from "./user";
 import { profileRouter } from "./profile";
 import { notificationRouter } from "./notification";
 import { settingRouter } from "./setting";
+import { corpUserRouter } from "./corpUser";
 
 /**
  * App Router - 所有 API 路由的根
@@ -17,6 +18,7 @@ export const appRouter = router({
   profile: profileRouter,
   notification: notificationRouter,
   setting: settingRouter,
+  corpUser: corpUserRouter,
 });
 
 /**

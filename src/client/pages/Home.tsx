@@ -5,18 +5,19 @@
 
 import { useState, useEffect } from "react";
 import { Button, Card, Typography, Avatar, Row, Col, Statistic, Tag, App, Layout, Menu, Dropdown, Breadcrumb, theme } from "antd";
-import { 
-  UserOutlined, 
-  LogoutOutlined, 
-  DashboardOutlined, 
-  SettingOutlined, 
+import {
+  UserOutlined,
+  LogoutOutlined,
+  DashboardOutlined,
+  SettingOutlined,
   SafetyCertificateOutlined,
   RocketOutlined,
   ThunderboltOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   TeamOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  WechatOutlined
 } from "@ant-design/icons";
 import { useSession, signOut } from "../lib/auth-client";
 import { trpc } from "../trpc";
@@ -24,6 +25,7 @@ import { UserManagement } from "./UserManagement";
 import { SecurityCenter } from "./SecurityCenter";
 import { ProfileSettings } from "./ProfileSettings";
 import { SystemSettings } from "./SystemSettings";
+import { CorpUsers } from "./CorpUsers";
 import { NotificationModal } from "../components/NotificationModal";
 import type { MenuItemType } from "antd/es/menu/interface";
 import logo from "../assets/logo.svg";
@@ -92,6 +94,11 @@ export function HomePage() {
       icon: <TeamOutlined />,
       label: "用户管理",
     }] : []),
+    {
+      key: "corpUsers",
+      icon: <WechatOutlined />,
+      label: "企业成员",
+    },
     {
       key: "content",
       icon: <FileTextOutlined />,
@@ -183,11 +190,12 @@ export function HomePage() {
               onClick={() => setCollapsed(!collapsed)}
               style={{ fontSize: "16px", width: 64, height: 64 }}
             />
-            <Breadcrumb 
+            <Breadcrumb
               items={[
                 { title: '首页' },
-                { title: currentPage === 'dashboard' ? '仪表盘' : 
+                { title: currentPage === 'dashboard' ? '仪表盘' :
                          currentPage === 'users' ? '用户管理' :
+                         currentPage === 'corpUsers' ? '企业成员' :
                          currentPage === 'content' ? '内容管理' :
                          currentPage === 'profile' ? '个人资料' :
                          currentPage === 'settings' ? '系统设置' :
@@ -338,6 +346,7 @@ export function HomePage() {
           )}
 
           {/* 其他页面占位 */}
+          {currentPage === "corpUsers" && <CorpUsers />}
           {currentPage === "content" && (
             <div className="fade-in">
               <Card variant="borderless">
