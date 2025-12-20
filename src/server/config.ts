@@ -14,10 +14,10 @@ export const config = {
   },
   bullmq: {
     redis: {
-      host: process.env.REDIS_HOST,
-      port: process.env.REDIS_PORT,
-      password: process.env.REDIS_PASSWORD,
-      db: process.env.REDIS_DB,
+      host: process.env.BULL_REDIS_HOST,
+      port: process.env.BULL_REDIS_PORT,
+      password: process.env.BULL_REDIS_PASSWORD,
+      db: process.env.BULL_REDIS_DB,
       maxRetriesPerRequest: null,
     },
   },

@@ -1,7 +1,7 @@
 # 将dist文件夹同步到服务器目录
 # 上传公钥过去 ssh-copy-id -i ~/.ssh/id_rsa.pub root@x.x.x.x
-host=root@x.x.x.x
-project_path=adq-marketing
+host=root@8.148.195.54
+project_path=adq-audience
 
 rsync -avz --delete ./server-linux-x64 .env.production ecosystem.config.js $host:~/$project_path/
 

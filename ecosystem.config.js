@@ -1,5 +1,5 @@
 module.exports = {
-  title: "adq-audience",
+  name: "adq-audience",
   script: "server-linux-x64",
   interpreter: "none",
   instances: "1",
