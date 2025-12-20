@@ -5,6 +5,13 @@
 import { router, protectedProcedure } from "../trpc";
 import { z } from "zod";
 import { syncAllCustomers, getCustomers, syncCustomerListByWxUserId } from "../service/customer";
+import {
+  createSyncTask,
+  startSyncTask,
+  retryTaskItem,
+  getTaskDetail,
+  getTaskList,
+} from "../service/syncCustomerTask";
 
 export const customerRouter = router({
   // 获取客户列表（支持分页）
@@ -17,11 +24,10 @@ export const customerRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      console.log(`[customer-router] list called with page=${input.page}, pageSize=${input.pageSize}`);
       return await getCustomers(userId, input.page, input.pageSize);
     }),
 
-  // 全量同步所有客户的external_userid
+  // 全量同步所有客户的external_userid（旧方法，保留兼容）
   sync: protectedProcedure.mutation(async ({ ctx }) => {
     const userId = ctx.session.user.id;
     return await syncAllCustomers(userId);
@@ -37,4 +43,49 @@ export const customerRouter = router({
       const userId = ctx.session.user.id;
       return await syncCustomerListByWxUserId(userId, input);
     }),
+
+  // 创建同步任务
+  createTask: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    return await createSyncTask(userId);
+  }),
+
+  // 开始执行任务
+  startTask: protectedProcedure
+    .input(
+      z.object({
+        taskId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await startSyncTask(input.taskId);
+    }),
+
+  // 重试单个任务项
+  retryItem: protectedProcedure
+    .input(
+      z.object({
+        taskItemId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await retryTaskItem(input.taskItemId);
+    }),
+
+  // 获取任务详情
+  getTaskDetail: protectedProcedure
+    .input(
+      z.object({
+        taskId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await getTaskDetail(input.taskId);
+    }),
+
+  // 获取任务列表
+  getTaskList: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    return await getTaskList(userId);
+  }),
 });

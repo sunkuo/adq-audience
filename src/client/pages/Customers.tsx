@@ -62,16 +62,13 @@ export function Customers() {
 
   // 加载客户列表（带分页）
   const loadCustomers = async (page: number = 1, pageSize: number = 20) => {
-    console.log(`[Customers] Loading page ${page}, pageSize ${pageSize}`);
     setLoading(true);
     try {
       const result = await trpc.customer.list.query({ page, pageSize });
-      console.log(`[Customers] Result:`, result);
       setCustomers(result.customers || []);
       setHasConfig(result.hasConfig !== false);
       setCorpId(result.corpId || "");
       if (result.pagination) {
-        console.log(`[Customers] Setting pagination:`, result.pagination);
         setPagination(result.pagination);
       }
     } catch (err: any) {
@@ -84,11 +81,6 @@ export function Customers() {
   useEffect(() => {
     loadCustomers(1, 20);
   }, []);
-
-  // 调试：监控 pagination 变化
-  useEffect(() => {
-    console.log(`[Customers] pagination state updated:`, pagination);
-  }, [pagination]);
 
   // 全量同步客户
   const handleSync = async () => {

@@ -130,31 +130,50 @@ export async function syncCustomerListByWxUserId(uid: string, wxUserId: string):
       };
     }
 
-    // 批量插入新数据（只插入不存在的记录）
-    console.log(`[customer] Step 5: Preparing bulk insert operations for ${customerList.length} customers`);
-    const bulkOps = customerList.map(externalUserid => ({
-      insertOne: {
-        document: {
-          userid: uid,
-          corpid: corpId,
-          wxUserId,
-          externalUserid,
-        },
-      },
-    }));
+    // 先查询已存在的客户，过滤掉重复的
+    console.log(`[customer] Step 5: Checking existing customers`);
+    const existingCustomers = await Customer.find({
+      userid: uid,
+      corpid: corpId,
+      wxUserId,
+      externalUserid: { $in: customerList },
+    }).select('externalUserid');
 
-    console.log(`[customer] Step 6: Executing bulkWrite with ${bulkOps.length} operations`);
-    const result = await Customer.bulkWrite(bulkOps, { ordered: false });
+    const existingExternalUserids = new Set(existingCustomers.map(c => c.externalUserid));
+    console.log(`[customer] Found ${existingExternalUserids.size} existing customers, ${customerList.length - existingExternalUserids.size} new customers`);
 
-    console.log(`[customer] Step 7: BulkWrite result: inserted=${result.insertedCount}, errors=${result.getWriteErrors()}`);
+    // 只插入不存在的记录
+    const newCustomers = customerList.filter(id => !existingExternalUserids.has(id));
+
+    if (newCustomers.length === 0) {
+      console.log(`[customer] No new customers to insert`);
+      return {
+        success: true,
+        added: 0,
+        total: customerList.length,
+        message: `同步完成，无新增客户`,
+      };
+    }
+
+    console.log(`[customer] Step 6: Inserting ${newCustomers.length} new customers`);
+    const insertResult = await Customer.insertMany(
+      newCustomers.map(externalUserid => ({
+        userid: uid,
+        corpid: corpId,
+        wxUserId,
+        externalUserid,
+      }))
+    );
+
+    console.log(`[customer] Step 7: Insert result: ${insertResult.length} inserted`);
     console.log(`[customer] ===== syncCustomerListByWxUserId END - SUCCESS =====`);
-    console.log(`[customer] Sync completed for user ${uid}, wxUserId ${wxUserId}: inserted ${result.insertedCount} customers`);
+    console.log(`[customer] Sync completed for user ${uid}, wxUserId ${wxUserId}: inserted ${insertResult.length} customers`);
 
     return {
       success: true,
-      added: result.insertedCount,
+      added: insertResult.length,
       total: customerList.length,
-      message: `同步成功，共导入 ${result.insertedCount} 个客户`,
+      message: `同步成功，共导入 ${insertResult.length} 个客户`,
     };
   } catch (error) {
     console.error(`[customer] ===== syncCustomerListByWxUserId END - ERROR =====`);

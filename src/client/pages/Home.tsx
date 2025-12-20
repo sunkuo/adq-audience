@@ -18,7 +18,8 @@ import {
   TeamOutlined,
   FileTextOutlined,
   WechatOutlined,
-  CustomerServiceOutlined
+  CustomerServiceOutlined,
+  SyncOutlined
 } from "@ant-design/icons";
 import { useSession, signOut } from "../lib/auth-client";
 import { trpc } from "../trpc";
@@ -28,6 +29,7 @@ import { ProfileSettings } from "./ProfileSettings";
 import { SystemSettings } from "./SystemSettings";
 import { CorpUsers } from "./CorpUsers";
 import { Customers } from "./Customers";
+import { CustomerSyncTasks } from "./CustomerSyncTasks";
 import { NotificationModal } from "../components/NotificationModal";
 import type { MenuItemType } from "antd/es/menu/interface";
 import logo from "../assets/logo.svg";
@@ -105,6 +107,11 @@ export function HomePage() {
       key: "customers",
       icon: <CustomerServiceOutlined />,
       label: "客户列表",
+    },
+    {
+      key: "customerTasks",
+      icon: <SyncOutlined />,
+      label: "同步任务",
     },
     {
       key: "content",
@@ -203,7 +210,7 @@ export function HomePage() {
                 { title: currentPage === 'dashboard' ? '仪表盘' :
                          currentPage === 'users' ? '用户管理' :
                          currentPage === 'corpUsers' ? '企业成员' :
-                         currentPage === 'customers' ? '客户列表' :
+                         currentPage === "customerTasks" ? "同步任务" : currentPage === "customers" ? "客户列表" :
                          currentPage === 'content' ? '内容管理' :
                          currentPage === 'profile' ? '个人资料' :
                          currentPage === 'settings' ? '系统设置' :
@@ -356,6 +363,7 @@ export function HomePage() {
           {/* 其他页面占位 */}
           {currentPage === "corpUsers" && <CorpUsers />}
           {currentPage === "customers" && <Customers />}
+          {currentPage === "customerTasks" && <CustomerSyncTasks />}
           {currentPage === "content" && (
             <div className="fade-in">
               <Card variant="borderless">

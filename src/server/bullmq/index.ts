@@ -7,7 +7,7 @@ export { Queue_ as Queue, Schedule_ as Schedule, registeredQueues, queueMap } fr
 export { startBullBoard } from "./bull-board.ts";
 
 // 手动导入所有队列和定时任务（装饰器自动注册）
-import "./queues/audience";
+import "./queues/customerSync";
 import "./schedules/wxwork";
 // 新增队列在此导入：
 // import "./queues/email";
