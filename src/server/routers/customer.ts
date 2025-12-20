@@ -1,16 +1,17 @@
 /**
- * 客户相关的 tRPC router（第一阶段）
+ * 客户相关的 tRPC router
  */
 
 import { router, protectedProcedure } from "../trpc";
 import { z } from "zod";
-import { syncAllCustomers, getCustomers, syncCustomerListByWxUserId } from "../service/customer";
+import { getCustomers, syncCustomerListByWxUserId } from "../service/customer";
 import {
   createSyncTask,
   startSyncTask,
   retryTaskItem,
   getTaskDetail,
   getTaskList,
+  getTaskProgress,
 } from "../service/syncCustomerTask";
 
 export const customerRouter = router({
@@ -27,13 +28,7 @@ export const customerRouter = router({
       return await getCustomers(userId, input.page, input.pageSize);
     }),
 
-  // 全量同步所有客户的external_userid（旧方法，保留兼容）
-  sync: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
-    return await syncAllCustomers(userId);
-  }),
-
-  // 同步指定接粉号的客户列表
+  // 同步指定接粉号的客户列表（单个接粉号同步）
   syncByWxUserId: protectedProcedure
     .input((val: unknown) => {
       if (typeof val === "string") return val;
@@ -88,4 +83,15 @@ export const customerRouter = router({
     const userId = ctx.session.user.id;
     return await getTaskList(userId);
   }),
+
+  // 获取单个任务的实时进度
+  getTaskProgress: protectedProcedure
+    .input(
+      z.object({
+        taskId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await getTaskProgress(input.taskId);
+    }),
 });

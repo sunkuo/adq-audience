@@ -1,6 +1,6 @@
 /**
- * 客户同步服务（第一阶段）
- * 用于同步企业微信客户的external_userid列表
+ * 客户同步服务
+ * 用于同步企业微信客户的详细信息
  */
 
 import Customer from "../entity/customer";
@@ -9,19 +9,98 @@ import Setting from "../entity/setting";
 import { Settings } from "../enum/Settings";
 import { getOrRefreshToken } from "./wxwork";
 
+interface ExternalContact {
+  external_userid: string;
+  name?: string;
+  position?: string;
+  avatar?: string;
+  corp_name?: string;
+  corp_full_name?: string;
+  type?: number;
+  gender?: number;
+  unionid?: string;
+  external_profile?: {
+    external_attr?: Array<{
+      type: number;
+      name: string;
+      text?: { value: string };
+      web?: { url: string; title: string };
+      miniprogram?: { appid: string; pagepath: string; title: string };
+    }>;
+  };
+}
+
+interface FollowInfo {
+  userid: string;
+  remark?: string;
+  description?: string;
+  createtime?: number;
+  tag_id?: string[];
+  remark_corp_name?: string;
+  remark_mobiles?: string[];
+  oper_userid?: string;
+  add_way?: number;
+  state?: string;
+  wechat_channels?: {
+    nickname?: string;
+    source?: number;
+  };
+}
+
+interface BatchGetByUserResponse {
+  errcode: number;
+  errmsg: string;
+  external_contact_list?: Array<{
+    external_contact: ExternalContact;
+    follow_info: FollowInfo;
+  }>;
+  next_cursor?: string;
+  fail_info?: {
+    unlicensed_userid_list?: string[];
+  };
+}
+
 /**
- * 从企业微信API获取指定成员的客户列表
+ * 从企业微信API批量获取客户详情（支持分页）
  * @param accessToken 企业微信access_token
- * @param wxUserId 企业成员的userid
- * @returns 客户external_userid列表
+ * @param wxUserIdList 企业成员的userid列表，最多100个
+ * @param cursor 分页游标，首次调用可不传
+ * @param limit 每次返回的最大记录数，默认100，最大100
+ * @returns 客户详情列表和下一页游标
  */
-async function fetchCustomerList(accessToken: string, wxUserId: string): Promise<string[] | null> {
-  console.log(`[customer] Starting fetchCustomerList for wxUserId: ${wxUserId}`);
+async function fetchCustomerDetails(
+  accessToken: string,
+  wxUserIdList: string[],
+  cursor?: string,
+  limit: number = 100
+): Promise<{
+  customers: Array<{
+    externalContact: ExternalContact;
+    followInfo: FollowInfo;
+  }>;
+  nextCursor?: string;
+} | null> {
+  console.log(`[customer] Starting fetchCustomerDetails for wxUserIdList: ${JSON.stringify(wxUserIdList)}, cursor: ${cursor || 'empty'}`);
   try {
-    const url = `https://qyapi.weixin.qq.com/cgi-bin/externalcontact/list?access_token=${accessToken}&userid=${wxUserId}`;
+    const url = `https://qyapi.weixin.qq.com/cgi-bin/externalcontact/batch/get_by_user?access_token=${accessToken}`;
     console.log(`[customer] API URL: ${url.replace(accessToken, '***')}`);
 
-    const response = await fetch(url);
+    const body = {
+      userid_list: wxUserIdList,
+      cursor: cursor || "",
+      limit: Math.min(limit, 100), // 确保不超过最大值
+    };
+
+    console.log(`[customer] API request body: ${JSON.stringify(body)}`);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
     console.log(`[customer] API response status: ${response.status}`);
 
     if (!response.ok) {
@@ -29,30 +108,81 @@ async function fetchCustomerList(accessToken: string, wxUserId: string): Promise
       return null;
     }
 
-    const data = await response.json() as {
-      errcode: number;
-      errmsg: string;
-      external_userid?: string[];
-    };
+    const data = await response.json() as BatchGetByUserResponse;
 
-    console.log(`[customer] API response data: errcode=${data.errcode}, errmsg=${data.errmsg}, external_userid count=${data.external_userid?.length || 0}`);
+    console.log(`[customer] API response data: errcode=${data.errcode}, errmsg=${data.errmsg}`);
 
     if (data.errcode !== 0) {
       console.error(`[customer] API error: errcode=${data.errcode}, errmsg=${data.errmsg}`);
       return null;
     }
 
-    const result = data.external_userid || [];
-    console.log(`[customer] fetchCustomerList success for ${wxUserId}: found ${result.length} customers`);
-    return result;
+    const customers = data.external_contact_list?.map(item => ({
+      externalContact: item.external_contact,
+      followInfo: item.follow_info,
+    })) || [];
+
+    console.log(`[customer] fetchCustomerDetails success: found ${customers.length} customers, nextCursor: ${data.next_cursor || 'none'}`);
+
+    return {
+      customers,
+      nextCursor: data.next_cursor,
+    };
   } catch (error) {
-    console.error(`[customer] Failed to fetch customer list for ${wxUserId}:`, error);
+    console.error(`[customer] Failed to fetch customer details:`, error);
     return null;
   }
 }
 
 /**
- * 同步指定接粉号的客户列表（第一阶段）
+ * 递归获取所有客户详情（处理分页）
+ * @param accessToken 企业微信access_token
+ * @param wxUserIdList 企业成员的userid列表
+ * @param cursor 初始游标
+ * @param limit 每次请求的限制数
+ * @returns 所有客户详情列表
+ */
+async function fetchAllCustomerDetails(
+  accessToken: string,
+  wxUserIdList: string[],
+  cursor?: string,
+  limit: number = 100
+): Promise<Array<{
+  externalContact: ExternalContact;
+  followInfo: FollowInfo;
+}>> {
+  const allCustomers: Array<{
+    externalContact: ExternalContact;
+    followInfo: FollowInfo;
+  }> = [];
+
+  let currentCursor = cursor;
+  let hasMore = true;
+
+  while (hasMore) {
+    const result = await fetchCustomerDetails(accessToken, wxUserIdList, currentCursor, limit);
+
+    if (!result) {
+      console.error(`[customer] Failed to fetch customer details in recursive loop`);
+      break;
+    }
+
+    allCustomers.push(...result.customers);
+
+    if (result.nextCursor) {
+      currentCursor = result.nextCursor;
+      console.log(`[customer] Continuing with next cursor: ${currentCursor}`);
+    } else {
+      hasMore = false;
+      console.log(`[customer] No more data, completed. Total customers: ${allCustomers.length}`);
+    }
+  }
+
+  return allCustomers;
+}
+
+/**
+ * 同步指定接粉号的客户列表（获取详细信息）
  * @param uid 用户ID
  * @param wxUserId 企业成员的userid
  * @returns 同步结果
@@ -106,74 +236,114 @@ export async function syncCustomerListByWxUserId(uid: string, wxUserId: string):
       };
     }
 
-    // 从API获取客户列表
-    console.log(`[customer] Step 4: Fetching customer list from API`);
-    const customerList = await fetchCustomerList(accessToken, wxUserId);
-    console.log(`[customer] customerList: ${customerList ? `array with ${customerList.length} items` : 'null'}`);
-    if (!customerList) {
-      console.log(`[customer] customerList is null, returning error`);
+    // 从API批量获取客户详情（支持递归分页）
+    console.log(`[customer] Step 4: Fetching customer details from API`);
+    const customerDetails = await fetchAllCustomerDetails(accessToken, [wxUserId]);
+    console.log(`[customer] customerDetails: ${customerDetails ? `array with ${customerDetails.length} items` : 'null'}`);
+    if (!customerDetails || customerDetails.length === 0) {
+      console.log(`[customer] customerDetails is empty, returning error`);
       return {
         success: false,
         added: 0,
         total: 0,
-        message: "获取客户列表失败",
+        message: "获取客户详情失败",
       };
     }
 
-    if (customerList.length === 0) {
-      console.log(`[customer] customerList is empty, no customers to sync`);
-      return {
-        success: true,
-        added: 0,
-        total: 0,
-        message: "该成员暂无客户",
-      };
-    }
+    console.log(`[customer] Step 5: Processing ${customerDetails.length} customer details`);
 
-    // 先查询已存在的客户，过滤掉重复的
-    console.log(`[customer] Step 5: Checking existing customers`);
+    // 先查询所有已存在的客户
+    const externalUseridList = customerDetails.map(d => d.externalContact.external_userid);
     const existingCustomers = await Customer.find({
       userid: uid,
       corpid: corpId,
       wxUserId,
-      externalUserid: { $in: customerList },
+      externalUserid: { $in: externalUseridList },
     }).select('externalUserid');
 
     const existingExternalUserids = new Set(existingCustomers.map(c => c.externalUserid));
-    console.log(`[customer] Found ${existingExternalUserids.size} existing customers, ${customerList.length - existingExternalUserids.size} new customers`);
 
-    // 只插入不存在的记录
-    const newCustomers = customerList.filter(id => !existingExternalUserids.has(id));
+    // 处理客户数据，准备插入或更新
+    const bulkOps: any[] = [];
+    let newCount = 0;
+    let updateCount = 0;
 
-    if (newCustomers.length === 0) {
-      console.log(`[customer] No new customers to insert`);
-      return {
-        success: true,
-        added: 0,
-        total: customerList.length,
-        message: `同步完成，无新增客户`,
-      };
-    }
+    for (const detail of customerDetails) {
+      const externalContact = detail.externalContact;
+      const followInfo = detail.followInfo;
 
-    console.log(`[customer] Step 6: Inserting ${newCustomers.length} new customers`);
-    const insertResult = await Customer.insertMany(
-      newCustomers.map(externalUserid => ({
+      const externalUserid = externalContact.external_userid;
+
+      const customerData = {
         userid: uid,
         corpid: corpId,
         wxUserId,
         externalUserid,
-      }))
-    );
 
-    console.log(`[customer] Step 7: Insert result: ${insertResult.length} inserted`);
+        // 客户基本信息
+        name: externalContact.name,
+        position: externalContact.position,
+        avatar: externalContact.avatar,
+        corpName: externalContact.corp_name,
+        corpFullName: externalContact.corp_full_name,
+        type: externalContact.type,
+        gender: externalContact.gender,
+        unionid: externalContact.unionid,
+        externalProfile: externalContact.external_profile,
+
+        // 跟进信息
+        remark: followInfo.remark,
+        description: followInfo.description,
+        createtime: followInfo.createtime,
+        tagId: followInfo.tag_id,
+        remarkCorpName: followInfo.remark_corp_name,
+        remarkMobiles: followInfo.remark_mobiles,
+        operUserid: followInfo.oper_userid,
+        addWay: followInfo.add_way,
+        state: followInfo.state,
+        wechatChannels: followInfo.wechat_channels,
+      };
+
+      if (!existingExternalUserids.has(externalUserid)) {
+        // 新增客户
+        bulkOps.push({
+          insertOne: {
+            document: customerData,
+          },
+        });
+        newCount++;
+      } else {
+        // 更新现有客户
+        bulkOps.push({
+          updateOne: {
+            filter: {
+              userid: uid,
+              corpid: corpId,
+              wxUserId,
+              externalUserid,
+            },
+            update: { $set: customerData },
+          },
+        });
+        updateCount++;
+      }
+    }
+
+    // 执行批量操作
+    if (bulkOps.length > 0) {
+      console.log(`[customer] Step 6: Executing bulk operations (${newCount} inserts, ${updateCount} updates)`);
+      await Customer.bulkWrite(bulkOps, { ordered: false });
+    }
+
+    console.log(`[customer] Step 7: Sync completed`);
     console.log(`[customer] ===== syncCustomerListByWxUserId END - SUCCESS =====`);
-    console.log(`[customer] Sync completed for user ${uid}, wxUserId ${wxUserId}: inserted ${insertResult.length} customers`);
+    console.log(`[customer] Sync completed for user ${uid}, wxUserId ${wxUserId}: ${newCount} new, ${updateCount} updated, total ${customerDetails.length}`);
 
     return {
       success: true,
-      added: insertResult.length,
-      total: customerList.length,
-      message: `同步成功，共导入 ${insertResult.length} 个客户`,
+      added: newCount,
+      total: customerDetails.length,
+      message: `同步成功，新增 ${newCount} 个客户，更新 ${updateCount} 个客户`,
     };
   } catch (error) {
     console.error(`[customer] ===== syncCustomerListByWxUserId END - ERROR =====`);
@@ -188,7 +358,7 @@ export async function syncCustomerListByWxUserId(uid: string, wxUserId: string):
 }
 
 /**
- * 同步所有接粉号的客户列表（第一阶段）
+ * 同步所有接粉号的客户列表
  * @param uid 用户ID
  * @returns 同步结果
  */
@@ -305,11 +475,11 @@ export async function syncAllCustomers(uid: string): Promise<{
 }
 
 /**
- * 获取客户列表（第一阶段 - 只有external_userid）
+ * 获取客户列表（包含详细信息）
  * @param uid 用户ID
  * @param page 页码，默认1
  * @param pageSize 每页数量，默认20
- * @returns 客户列表（带分页）
+ * @returns 客户列表（带分页和详细信息）
  */
 export async function getCustomers(uid: string, page: number = 1, pageSize: number = 20) {
   console.log(`[customer] ===== getCustomers START =====`);
@@ -373,7 +543,34 @@ export async function getCustomers(uid: string, page: number = 1, pageSize: numb
         id: customer._id.toString(),
         wxUserId: customer.wxUserId,
         externalUserid: customer.externalUserid,
+
+        // 客户基本信息
+        name: customer.name,
+        position: customer.position,
+        avatar: customer.avatar,
+        corpName: customer.corpName,
+        corpFullName: customer.corpFullName,
+        type: customer.type,
+        gender: customer.gender,
+        unionid: customer.unionid,
+
+        // 跟进信息
+        remark: customer.remark,
+        description: customer.description,
+        createtime: customer.createtime,
+        tagId: customer.tagId,
+        remarkCorpName: customer.remarkCorpName,
+        remarkMobiles: customer.remarkMobiles,
+        operUserid: customer.operUserid,
+        addWay: customer.addWay,
+        state: customer.state,
+
+        // 视频号信息
+        wechatChannels: customer.wechatChannels,
+
+        // 时间戳
         createdAt: customer.createdAt,
+        updatedAt: customer.updatedAt,
       })),
       hasConfig: true,
       corpId,

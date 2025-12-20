@@ -136,6 +136,35 @@ export function CustomerSyncTasks() {
     }
   };
 
+  // 5秒自动轮询任务列表进度
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    // 检查是否有正在运行的任务
+    const hasRunningTask = tasks.some(task => task.status === "running");
+
+    if (hasRunningTask) {
+      const fetchProgress = async () => {
+        try {
+          // 获取最新的任务列表
+          const result = await trpc.customer.getTaskList.query();
+          setTasks(result || []);
+        } catch (err: any) {
+          console.error("自动轮询失败:", err);
+        }
+      };
+
+      // 每5秒轮询一次
+      interval = setInterval(fetchProgress, 5000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [tasks]);
+
   // 重试单个任务项
   const handleRetryItem = async (item: SyncTaskItem) => {
     setRetrying(item._id);

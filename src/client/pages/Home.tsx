@@ -16,7 +16,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   TeamOutlined,
-  FileTextOutlined,
   WechatOutlined,
   CustomerServiceOutlined,
   SyncOutlined
@@ -114,11 +113,6 @@ export function HomePage() {
       label: "同步任务",
     },
     {
-      key: "content",
-      icon: <FileTextOutlined />,
-      label: "内容管理",
-    },
-    {
       key: "settings",
       icon: <SettingOutlined />,
       label: "系统设置",
@@ -211,7 +205,6 @@ export function HomePage() {
                          currentPage === 'users' ? '用户管理' :
                          currentPage === 'corpUsers' ? '企业成员' :
                          currentPage === "customerTasks" ? "同步任务" : currentPage === "customers" ? "客户列表" :
-                         currentPage === 'content' ? '内容管理' :
                          currentPage === 'profile' ? '个人资料' :
                          currentPage === 'settings' ? '系统设置' :
                          currentPage === 'security' ? '安全中心' : '仪表盘' },
@@ -364,14 +357,6 @@ export function HomePage() {
           {currentPage === "corpUsers" && <CorpUsers />}
           {currentPage === "customers" && <Customers />}
           {currentPage === "customerTasks" && <CustomerSyncTasks />}
-          {currentPage === "content" && (
-            <div className="fade-in">
-              <Card variant="borderless">
-                <Title level={4}>内容管理</Title>
-                <Text type="secondary">功能开发中...</Text>
-              </Card>
-            </div>
-          )}
           {currentPage === "settings" && <SystemSettings />}
           {currentPage === "security" && <SecurityCenter />}
           {currentPage === "profile" && <ProfileSettings />}

@@ -214,3 +214,59 @@ export async function getTaskList(uid: string) {
   const tasks = await SyncCustomerTask.find({ userid: uid }).sort({ createdAt: -1 }).limit(50);
   return tasks;
 }
+
+/**
+ * 获取单个任务的实时进度
+ * @param taskId 任务ID
+ * @returns 任务进度信息
+ */
+export async function getTaskProgress(taskId: string) {
+  console.log(`[sync-task] Getting task progress: ${taskId}`);
+
+  const task = await SyncCustomerTask.findById(taskId);
+  if (!task) {
+    throw new Error("任务不存在");
+  }
+
+  // 获取任务项统计
+  const items = await SyncCustomerTaskItem.find({ taskId });
+
+  // 统计各状态数量
+  const stats = {
+    pending: 0,
+    running: 0,
+    completed: 0,
+    failed: 0,
+  };
+
+  items.forEach(item => {
+    stats[item.status as keyof typeof stats]++;
+  });
+
+  return {
+    task: {
+      _id: task._id,
+      status: task.status,
+      totalWxUsers: task.totalWxUsers,
+      successCount: task.successCount,
+      failCount: task.failCount,
+      totalCustomers: task.totalCustomers,
+      startedAt: task.startedAt,
+      completedAt: task.completedAt,
+      errorMessage: task.errorMessage,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
+    },
+    stats,
+    items: items.map(item => ({
+      _id: item._id,
+      wxUserId: item.wxUserId,
+      status: item.status,
+      customerCount: item.customerCount,
+      addedCount: item.addedCount,
+      errorMessage: item.errorMessage,
+      startedAt: item.startedAt,
+      completedAt: item.completedAt,
+    })),
+  };
+}

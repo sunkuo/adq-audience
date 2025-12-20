@@ -1,6 +1,6 @@
 /**
- * 客户管理页面（第一阶段）
- * 用于查看和同步企业微信客户列表（只显示external_userid）
+ * 客户管理页面
+ * 用于查看和同步企业微信客户详细信息
  */
 
 import { useState, useEffect } from "react";
@@ -22,11 +22,10 @@ import {
   Descriptions,
 } from "antd";
 import {
-  SyncOutlined,
   UserOutlined,
-  TeamOutlined,
   CustomerServiceOutlined,
   CheckCircleOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import { trpc } from "../trpc";
 
@@ -36,6 +35,13 @@ interface CustomerData {
   id: string;
   wxUserId: string;
   externalUserid: string;
+  name?: string;
+  avatar?: string;
+  unionid?: string;
+  remark?: string;
+  description?: string;
+  corpName?: string;
+  gender?: number;
   createdAt: string;
 }
 
@@ -49,7 +55,6 @@ interface Pagination {
 export function Customers() {
   const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [hasConfig, setHasConfig] = useState(true);
   const [corpId, setCorpId] = useState("");
@@ -82,24 +87,6 @@ export function Customers() {
     loadCustomers(1, 20);
   }, []);
 
-  // 全量同步客户
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      const result = await trpc.customer.sync.mutate();
-
-      if (result.success) {
-        message.success(result.message);
-        await loadCustomers(pagination.page, pagination.pageSize);
-      } else {
-        message.warning(result.message);
-      }
-    } catch (err: any) {
-      message.error(err?.message || "同步失败");
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   // 表格列配置
   const columns = [
@@ -107,7 +94,8 @@ export function Customers() {
       title: "接粉号",
       dataIndex: "wxUserId",
       key: "wxUserId",
-      width: 180,
+      width: 150,
+      fixed: "left",
       render: (text: string) => (
         <Space>
           <UserOutlined style={{ color: "#6366f1" }} />
@@ -116,17 +104,63 @@ export function Customers() {
       ),
     },
     {
+      title: "客户昵称",
+      dataIndex: "name",
+      key: "name",
+      width: 140,
+      render: (text: string) => (
+        <Text>{text || "-"}</Text>
+      ),
+    },
+    {
+      title: "头像",
+      dataIndex: "avatar",
+      key: "avatar",
+      width: 80,
+      align: "center",
+      render: (text: string) => (
+        text ? (
+          <Tooltip title={<img src={text} alt="avatar" style={{ width: 80, height: 80, borderRadius: 4 }} />}>
+            <img src={text} alt="avatar" style={{ width: 32, height: 32, borderRadius: 4, border: "1px solid #d9d9d9" }} />
+          </Tooltip>
+        ) : (
+          <Text type="secondary" style={{ fontSize: 12 }}>无</Text>
+        )
+      ),
+    },
+    {
+      title: "UnionID",
+      dataIndex: "unionid",
+      key: "unionid",
+      width: 220,
+      render: (text: string) => (
+        text ? <Text code style={{ fontSize: 11 }}>{text}</Text> : <Text type="secondary">-</Text>
+      ),
+    },
+    {
       title: "客户External UserID",
       dataIndex: "externalUserid",
       key: "externalUserid",
+      width: 220,
       render: (text: string) => (
-        <Text code style={{ fontSize: 12 }}>{text}</Text>
+        <Text code style={{ fontSize: 11 }}>{text}</Text>
+      ),
+    },
+    {
+      title: "备注",
+      dataIndex: "remark",
+      key: "remark",
+      width: 180,
+      render: (text: string) => (
+        text || <Text type="secondary">-</Text>
       ),
     },
     {
       title: "同步时间",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: 180,
+      fixed: "right",
       render: (text: string) => (
         <Text type="secondary" style={{ fontSize: 12 }}>
           {new Date(text).toLocaleString()}
@@ -145,22 +179,7 @@ export function Customers() {
             title={
               <Space>
                 <CustomerServiceOutlined style={{ color: "#6366f1" }} />
-                <span>客户列表（第一阶段）</span>
-              </Space>
-            }
-            extra={
-              <Space>
-                <Tooltip title="同步所有接粉号的客户external_userid">
-                  <Button
-                    type="primary"
-                    icon={<SyncOutlined />}
-                    onClick={handleSync}
-                    loading={syncing}
-                    disabled={!hasConfig}
-                  >
-                    全量同步
-                  </Button>
-                </Tooltip>
+                <span>客户列表</span>
               </Space>
             }
           >
@@ -179,16 +198,10 @@ export function Customers() {
                 <Space wrap>
                   <Tag color="blue">企业ID: {corpId}</Tag>
                   <Tag color="green">总客户数: {pagination.total}</Tag>
-                  <Tag color="purple">第一阶段</Tag>
+                  <Tag color="purple">详细信息</Tag>
                 </Space>
               </div>
             )}
-
-            <div style={{ marginBottom: 16 }}>
-              <Text type="secondary" style={{ fontSize: 13 }}>
-                第一阶段：只同步客户的 external_userid 列表。后续阶段会获取客户详细信息（姓名、职位、头像等）。
-              </Text>
-            </div>
 
             <Divider style={{ margin: "16px 0" }} />
 
@@ -203,19 +216,14 @@ export function Customers() {
                     {hasConfig ? "暂无客户数据" : "未配置企业微信"}
                   </span>
                 }
-              >
-                {hasConfig && (
-                  <Button type="primary" icon={<SyncOutlined />} onClick={handleSync} loading={syncing}>
-                    立即同步
-                  </Button>
-                )}
-              </Empty>
+              />
             ) : (
               <Table
                 columns={columns}
                 dataSource={customers}
                 rowKey="id"
                 key={`table-${pagination.page}-${pagination.pageSize}`}
+                scroll={{ x: 1240 }}
                 pagination={{
                   current: pagination.page,
                   pageSize: pagination.pageSize,
@@ -242,26 +250,15 @@ export function Customers() {
           <Card bordered={false} className="shadow-sm">
             <Title level={5} style={{ marginBottom: 12 }}>
               <CheckCircleOutlined style={{ marginRight: 8, color: "#52c41a" }} />
-              阶段说明
+              功能说明
             </Title>
-
-            <Descriptions column={1} size="small" bordered>
-              <Descriptions.Item label="阶段一">
-                <Text strong>已完成</Text> - 同步客户 external_userid 列表
-              </Descriptions.Item>
-              <Descriptions.Item label="阶段二">
-                <Text type="secondary">待开发</Text> - 获取客户详细信息（姓名、职位、头像等）
-              </Descriptions.Item>
-            </Descriptions>
-
-            <Divider style={{ margin: "16px 0" }} />
 
             <Paragraph type="secondary" style={{ fontSize: 13, marginBottom: 0 }}>
               <ul style={{ paddingLeft: 20, margin: 0 }}>
-                <li>点击"全量同步"会遍历所有接粉号，获取每个接粉号的客户列表</li>
-                <li>每个接粉号的客户列表会自动去重后存储</li>
-                <li>第一阶段只存储客户的 external_userid，这是客户在企业微信中的唯一标识</li>
-                <li>需要先同步企业成员（接粉号）才能同步客户列表</li>
+                <li>客户列表显示通过批量获取详情接口同步的完整客户信息</li>
+                <li>支持查看客户昵称、头像、UnionID、备注等详细信息</li>
+                <li>点击头像可查看大图，UnionID和External UserID以代码块形式显示</li>
+                <li>请使用任务管理功能进行批量同步，支持分页递归获取所有数据</li>
                 <li>access_token 会自动管理，无需手动刷新</li>
                 <li>表格支持后端分页，可调整每页显示数量和跳转页码</li>
               </ul>
@@ -274,7 +271,11 @@ export function Customers() {
               <Paragraph type="secondary" style={{ fontSize: 13, marginTop: 8 }}>
                 <ul style={{ paddingLeft: 20, margin: 0 }}>
                   <li><Text code>wxUserId</Text> - 接粉号（企业成员）的userid</li>
-                  <li><Text code>externalUserid</Text> - 客户的external_userid（企业微信中的客户唯一标识）</li>
+                  <li><Text code>name</Text> - 客户昵称</li>
+                  <li><Text code>avatar</Text> - 客户头像URL</li>
+                  <li><Text code>unionid</Text> - 微信UnionID（跨应用唯一标识）</li>
+                  <li><Text code>externalUserid</Text> - 企业微信客户唯一标识</li>
+                  <li><Text code>remark</Text> - 跟进备注</li>
                   <li><Text code>createdAt</Text> - 同步时间</li>
                 </ul>
               </Paragraph>
