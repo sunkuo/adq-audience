@@ -19,7 +19,7 @@ interface QueueOptions {
 
 interface ScheduleOptions {
   every?: number; // 毫秒
-  cron?: string;  // cron 表达式
+  cron?: string; // cron 表达式
   data?: Record<string, unknown>;
 }
 
@@ -43,14 +43,21 @@ export function Queue_(name: string, options?: QueueOptions) {
       queue.setGlobalConcurrency(options.concurrency);
     }
     if (options?.rateLimit) {
-      queue.setGlobalRateLimit(options.rateLimit.max, options.rateLimit.duration);
+      queue.setGlobalRateLimit(
+        options.rateLimit.max,
+        options.rateLimit.duration
+      );
     }
 
     // 创建实例获取 process 方法
     const instance = new constructor();
 
     // 创建 Worker
-    const worker = new Worker(queueName, instance.process.bind(instance), { connection });
+    const worker = new Worker(queueName, instance.process.bind(instance), {
+      connection,
+      removeOnComplete: { count: 3 },
+      removeOnFail: { age: 1000 * 60 * 60 * 24 },
+    });
 
     worker.on("completed", (job: Job) => {
       console.log(tag, "completed", job.id);
@@ -89,18 +96,18 @@ export function Schedule_(name: string, schedule: ScheduleOptions) {
     if (schedule.every) scheduleConfig.every = schedule.every;
     if (schedule.cron) scheduleConfig.pattern = schedule.cron;
 
-    queue.upsertJobScheduler(
-      queueName,
-      scheduleConfig,
-      {
-        name,
-        data: schedule.data || {},
-        opts: {},
-      }
-    );
+    queue.upsertJobScheduler(queueName, scheduleConfig, {
+      name,
+      data: schedule.data || {},
+      opts: {},
+    });
 
     // 创建 Worker
-    const worker = new Worker(queueName, instance.process.bind(instance), { connection });
+    const worker = new Worker(queueName, instance.process.bind(instance), {
+      connection,
+      removeOnComplete: { count: 3 },
+      removeOnFail: { count: 3 },
+    });
 
     worker.on("completed", (job: Job) => {
       console.log(tag, "completed", job.id);
